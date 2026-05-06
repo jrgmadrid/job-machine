@@ -1,0 +1,9 @@
+{
+  "role_keywords": ["engineer", "developer", "platform", "backend", "infrastructure"],
+  "seniority": "senior",
+  "location_preference": ["remote", "united states", "us"],
+  "avoid": ["sales", "marketing", "manager", "intern", "junior"],
+  "target_segments": ["developer tools", "infrastructure", "early-stage startup"],
+  "excluded_companies": [],
+  "min_score": 3
+}

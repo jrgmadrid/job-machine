@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import json
 import re
+import sys
 import time
+from pathlib import Path
 from typing import Any
 
 import httpx
 
 from scripts.db import Database
 from scripts.fetchers import USER_AGENT
+
+_CONFIG_PATH = Path(__file__).parent.parent / "config.json"
 
 _DDG_URL = "https://html.duckduckgo.com/html/"
 
@@ -42,6 +47,14 @@ def build_queries(profile: dict[str, Any]) -> list[str]:
     return queries
 
 
+def _load_profile(db: Database) -> dict[str, Any]:
+    base = json.loads(_CONFIG_PATH.read_text())
+    expansion = db.get_profile_expansion()
+    if expansion:
+        base["role_keywords"] = expansion.expanded_keywords[:6] or base.get("role_keywords", [])
+    return base
+
+
 def harvest(profile: dict[str, Any], db: Database, sleep: float = 2.0) -> int:
     queries = build_queries(profile)
     known_companies = {b.company for b in db.list_tracked_boards()}
@@ -63,3 +76,15 @@ def harvest(profile: dict[str, Any], db: Database, sleep: float = 2.0) -> int:
                     known_companies.add(slug)
                     new_boards += 1
     return new_boards
+
+
+def main() -> int:
+    db = Database.from_env()
+    profile = _load_profile(db)
+    new = harvest(profile, db)
+    print(f"added {new} new board{'s' if new != 1 else ''}", file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

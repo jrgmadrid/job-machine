@@ -16,7 +16,7 @@ Run on: `<date>`
 
 ### Phase 2 — schema bootstrap
 - [ ] `uv run python -m scripts.db bootstrap` exits 0 against Turso (re-runnable, idempotent)
-- [ ] All 10 tables present (`applications`, `seen_jobs`, `tracked_companies`, `tracked_boards`, `board_detect_cache`, `company_research`, `profile_expansion`, `resume_blob`, `hn_cache`, plus indexes)
+- [ ] All 9 tables present (`applications`, `seen_jobs`, `tracked_companies`, `tracked_boards`, `board_detect_cache`, `company_research`, `profile_expansion`, `resume_blob`, `hn_cache`) + 3 indexes
 
 ### Phase 3 — Resend smoke
 - [ ] `uv run python -m scripts.email_smoketest` sent

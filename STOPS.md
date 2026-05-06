@@ -2,11 +2,11 @@
 
 Blockers and informational deviations from spec. Append new entries at the bottom.
 
-## STOP-0 — `.env` missing
+## STOP-0 — `.env` partially provisioned
 Phase: 0
-Question: Provide values for `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `RESEND_API_KEY`, `RESEND_FROM`, `EMAIL_TO`.
-Default if unanswered: `.env.example` scaffolded; Phase 2 (live DB bootstrap), Phase 3 (smoke email), Phase 4 acceptance (b) (Turso writes), and Phase 8 (end-to-end) deferred until present.
-Cost of waiting: deterministic Python work and prompt drafting proceeds; live smoke tests blocked.
+Status (2026-05-06): **Turso provisioned.** `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` set; `python -m scripts.db bootstrap` ran successfully against the `aws-us-west-2` `job-machine` DB; all 9 tables present.
+Still missing: `RESEND_API_KEY`, `RESEND_FROM` (verified sender on a real-name-owned domain), `EMAIL_TO`.
+Cost of waiting on Resend: Phase 3 smoke send and the email step of Phase 6/8 stay blocked. Everything else (Phase 4 detect/harvest writes, Phase 8 resume seed, skill smoketests) is unblocked.
 
 ## INFO-Cowork-1 — Routine prompts live in `docs/routines/`, not `routines/`
 Phase: 6
@@ -30,6 +30,10 @@ Reason: Runbook §Opsec's hook used BRE-style alternation (`\|`) with `grep -iE`
 ## INFO-Python-Pin-1 — Project pinned to Python 3.12
 Phase: 1
 Reason: `libsql` v0.1.11 has no prebuilt wheel for Python 3.14 (system default on this machine), and the source build via `maturin` fails. Project pinned to 3.12 via `.python-version`; uv installs 3.12.13 alongside.
+
+## INFO-Harvest-Mojeek — Search backend swapped from DuckDuckGo to Mojeek
+Phase: 4
+Reason: As of 2026-05-06 the DuckDuckGo HTML endpoint (`https://html.duckduckgo.com/html/`) returns HTTP 202 + the DDG homepage for `site:` queries from any non-browser client (tested both POST and GET, with and without primed cookies). Brave Search returns HTTP 429. Mojeek returns HTTP 200 with usable result URLs that the existing host regex can extract directly. `scripts/harvest.py` now hits `https://www.mojeek.com/search?q=...` instead. The 2-second rate limit is preserved.
 
 ## STOP-Workable — Public Workable API requires OAuth
 Phase: 4

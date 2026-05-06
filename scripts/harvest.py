@@ -14,7 +14,9 @@ from scripts.fetchers import USER_AGENT
 
 _CONFIG_PATH = Path(__file__).parent.parent / "config.json"
 
-_DDG_URL = "https://html.duckduckgo.com/html/"
+# Mojeek instead of the runbook's DuckDuckGo HTML endpoint — DDG soft-blocks us
+# (HTTP 202 + homepage HTML). See INFO-Harvest-Mojeek in STOPS.md.
+_SEARCH_URL = "https://www.mojeek.com/search"
 
 _HOSTS = {
     "greenhouse": "boards.greenhouse.io",
@@ -36,15 +38,13 @@ _HOST_PATTERNS = {
 
 
 def build_queries(profile: dict[str, Any]) -> list[str]:
+    """Generate `site:` queries for each ATS host × role keyword.
+
+    Kept deliberately simple (`site:HOST KEYWORD`) — Mojeek rejects (`HTTP 403`)
+    queries with `intitle:` operators, parentheses, or boolean OR clauses.
+    """
     role_terms = profile.get("role_keywords", ["engineer"])[:3]
-    location_terms = profile.get("location_preference", ["remote"])
-    location_clause = " OR ".join(f'"{loc}"' for loc in location_terms)
-    queries = [
-        f"site:{host} intitle:{role} ({location_clause})"
-        for host in _HOSTS.values()
-        for role in role_terms
-    ]
-    return queries
+    return [f"site:{host} {role}" for host in _HOSTS.values() for role in role_terms]
 
 
 def _load_profile(db: Database) -> dict[str, Any]:
@@ -55,7 +55,7 @@ def _load_profile(db: Database) -> dict[str, Any]:
     return base
 
 
-def harvest(profile: dict[str, Any], db: Database, sleep: float = 2.0) -> int:
+def harvest(profile: dict[str, Any], db: Database, sleep: float = 3.0) -> int:
     queries = build_queries(profile)
     known_companies = {b.company for b in db.list_tracked_boards()}
     new_boards = 0
@@ -64,7 +64,7 @@ def harvest(profile: dict[str, Any], db: Database, sleep: float = 2.0) -> int:
     ) as c:
         for q in queries:
             time.sleep(sleep)
-            r = c.post(_DDG_URL, data={"q": q})
+            r = c.get(_SEARCH_URL, params={"q": q})
             r.raise_for_status()
             html = r.text
             for board_type, pattern in _HOST_PATTERNS.items():

@@ -11,7 +11,7 @@ from scripts.email import send_digest
 
 def main() -> int:
     payload = json.load(sys.stdin)
-    min_score = int(os.environ.get("MIN_SCORE", "3"))
+    min_score = int(os.environ.get("MIN_SCORE", "4"))
     db = Database.from_env()
 
     qualifying: list[Application] = []

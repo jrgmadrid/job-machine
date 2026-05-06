@@ -4,10 +4,17 @@ import html as html_lib
 import json
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from html.parser import HTMLParser
 from typing import Any
 
 import httpx
+
+
+def _ms_to_iso(ms: int | None) -> str | None:
+    if ms is None:
+        return None
+    return datetime.fromtimestamp(ms / 1000, UTC).isoformat().replace("+00:00", "Z")
 
 USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -31,6 +38,7 @@ class RawListing:
     url: str
     description: str
     remote: bool = False
+    posted_at: str | None = None  # ISO 8601 UTC; None when the source doesn't expose a date
 
 
 def _client() -> httpx.Client:
@@ -109,6 +117,7 @@ def fetch_greenhouse(slug: str) -> list[RawListing]:
                 url=j["absolute_url"],
                 description=_html_to_text(j.get("content") or ""),
                 remote=_is_remote(loc_name, *metadata_strings),
+                posted_at=j.get("updated_at") or j.get("first_published"),
             )
         )
     return listings
@@ -132,6 +141,7 @@ def fetch_ashby(slug: str) -> list[RawListing]:
                 url=j.get("applyUrl") or j.get("jobUrl") or "",
                 description=_html_to_text(j.get("descriptionHtml") or ""),
                 remote=_is_remote(j.get("isRemote"), location),
+                posted_at=j.get("publishedDate") or j.get("updatedAt"),
             )
         )
     return listings
@@ -158,6 +168,7 @@ def fetch_lever(slug: str) -> list[RawListing]:
                 url=p.get("hostedUrl") or p.get("applyUrl") or "",
                 description=_html_to_text(body),
                 remote=_is_remote(location, commitment),
+                posted_at=_ms_to_iso(p.get("createdAt")),
             )
         )
     return listings
@@ -244,6 +255,7 @@ def fetch_remotive(category: str = "software-dev") -> list[RawListing]:
                 url=j.get("url") or "",
                 description=_html_to_text(j.get("description") or ""),
                 remote=True,
+                posted_at=j.get("publication_date"),
             )
         )
     return listings
@@ -301,6 +313,7 @@ def fetch_hn_jobs() -> list[RawListing]:
                 url=h.get("url") or f"https://news.ycombinator.com/item?id={h['objectID']}",
                 description=h.get("story_text") or "",
                 remote=_is_remote(title),
+                posted_at=h.get("created_at"),
             )
         )
     return listings

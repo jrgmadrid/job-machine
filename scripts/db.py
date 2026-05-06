@@ -127,7 +127,10 @@ class Database:
         placeholders = ", ".join("?" for _ in _APP_FIELDS)
         values = tuple(getattr(app, c) for c in _APP_FIELDS)
         with self._connect() as conn:
-            conn.execute(f"INSERT INTO applications ({cols}) VALUES ({placeholders})", values)
+            conn.execute(
+                f"INSERT OR IGNORE INTO applications ({cols}) VALUES ({placeholders})",
+                values,
+            )
             conn.commit()
 
     def get(self, app_id: str) -> Application | None:

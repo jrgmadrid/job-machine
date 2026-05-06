@@ -5,6 +5,7 @@ import json
 import re
 import sys
 from dataclasses import asdict
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -54,10 +55,24 @@ def _load_profile(db: Database) -> dict[str, Any]:
     return base
 
 
+def _is_too_old(posted_at: str | None, max_age_days: int) -> bool:
+    """Return True if the listing's `posted_at` is older than the cutoff. None passes through."""
+    if not posted_at:
+        return False
+    try:
+        dt = datetime.fromisoformat(posted_at.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=UTC)
+    return datetime.now(UTC) - dt > timedelta(days=max_age_days)
+
+
 def prefilter(listings: list[RawListing], profile: dict[str, Any]) -> list[RawListing]:
     avoid_terms = [t.lower() for t in profile.get("avoid", [])]
     excluded_co = {c.lower() for c in profile.get("excluded_companies", [])}
     locations = [loc.lower() for loc in profile.get("location_preference", [])]
+    max_age_days = profile.get("max_listing_age_days", 45)
     out: list[RawListing] = []
     for lst in listings:
         if _SKIP_TITLE_PATTERN.search(lst.title):
@@ -71,6 +86,8 @@ def prefilter(listings: list[RawListing], profile: dict[str, Any]) -> list[RawLi
             location_l = lst.location.lower()
             if not any(loc in location_l for loc in locations):
                 continue
+        if _is_too_old(lst.posted_at, max_age_days):
+            continue
         out.append(lst)
     return out
 

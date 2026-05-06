@@ -15,11 +15,9 @@ Phase: 6
 Reason: Per the Claude Code Routines docs (https://code.claude.com/docs/en/routines), routines are configured in the claude.ai web UI and bound to a Git repo at registration time. They are not loaded from a `routines/` directory in the repo. Naming the directory `routines/` would imply runtime loading. The prompts (paste-into-form reference material) now live in `docs/routines/`.
 Acceptance rewrite: Phase 6 acceptance "three routine files exist with valid Cowork config syntax" → "three routine prompt files exist + each registered on claude.ai/code/routines + manual trigger produces expected side effect."
 
-## STOP-Cowork-Parallel — Verify Task-tool parallel subagent dispatch in cloud Routines
+## STOP-Cowork-Parallel — RESOLVED 2026-05-06
 Phase: 6
-Question: Does a routine's cloud Claude Code session support parallel subagent fan-out (multiple Task-tool calls in one assistant turn) the same way an interactive session does?
-Default if unanswered: serial scoring with batch size 10 (~2 min total at typical day's volume).
-Cost of waiting: latency cost only; correctness unaffected.
+First production run dispatched 12 parallel Haiku parsers (HN comments) and 10 parallel Haiku scorers (listings) in single turns. Cloud Routine sessions support parallel Task-tool fanout the same way interactive sessions do. Total runtime stayed under target.
 
 ## INFO-libsql-1 — `libsql-experimental` superseded by `libsql`
 Phase: 2

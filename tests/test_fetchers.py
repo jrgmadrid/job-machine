@@ -45,6 +45,7 @@ def test_serialize_roundtrip() -> None:
             url="https://example.com/1",
             description="x",
             remote=True,
+            posted_at="2026-04-15T12:00:00Z",
         )
     ]
     assert deserialize_listings(serialize_listings(lst)) == lst

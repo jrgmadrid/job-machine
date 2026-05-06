@@ -1,9 +1,11 @@
 {
   "role_keywords": ["engineer", "developer", "platform", "backend", "infrastructure"],
   "seniority": "senior",
-  "location_preference": ["remote", "united states", "us"],
+  "location_preference": ["vancouver", "british columbia", "canada", "remote"],
+  "geo_constraints": "Based in Vancouver, BC, Canada. Acceptable: in-person or hybrid in Greater Vancouver (Burnaby, Richmond, North Vancouver, Surrey count); fully remote roles open to Canadian residents (or Pacific time zone or 'remote-Americas'/'remote-global'). NOT acceptable: US-only remote (very common in postings — phrases like 'US-based only', 'must reside in the United States', 'remote (US)'); in-person Toronto, NYC, SF, or any non-Vancouver office. Score US-only remote at 1-2 even if the role itself is a strong match.",
   "avoid": ["sales", "marketing", "manager", "intern", "junior"],
   "target_segments": ["developer tools", "infrastructure", "early-stage startup"],
   "excluded_companies": [],
-  "min_score": 3
+  "min_score": 3,
+  "max_listing_age_days": 45
 }

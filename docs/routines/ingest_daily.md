@@ -10,7 +10,7 @@
 | Schedule | `0 8 * * 1-5` (8am weekdays, your local timezone) |
 | Repository | `jrgmadrid/job-machine` (default branch `main`) |
 | Cloud env | must inject `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `RESEND_API_KEY`, `RESEND_FROM`, `EMAIL_TO`. Optional: `MIN_SCORE` (default `3`). |
-| Setup script | `uv sync --extra dev` |
+| Setup script | leave empty — `uv sync --extra dev` runs via the repo's `.claude/settings.json` SessionStart hook, not the env's setup script (the latter runs before the clone and can't see `pyproject.toml`) |
 
 ## Routine prompt body
 

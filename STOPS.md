@@ -33,6 +33,10 @@ Reason: Runbook §Opsec's hook used BRE-style alternation (`\|`) with `grep -iE`
 Phase: 1
 Reason: `libsql` v0.1.11 has no prebuilt wheel for Python 3.14 (system default on this machine), and the source build via `maturin` fails. Project pinned to 3.12 via `.python-version`; uv installs 3.12.13 alongside.
 
+## INFO-Cloud-Setup — `uv sync` belongs in a SessionStart hook, not the env setup script
+Phase: 6
+Reason: Cloud-environment **setup scripts** run before the repo is cloned, so `uv sync --extra dev` exits with `No pyproject.toml found`. Per the Claude Code on Web docs, the canonical place for project-dep installation is a `SessionStart` hook in `.claude/settings.json` committed to the repo (runs after the clone, has access to `pyproject.toml`). The env's "Setup script" field should be left empty (uv is pre-installed in the cloud image). Hook is now in place at `.claude/settings.json`.
+
 ## INFO-Harvest-Mojeek — Search backend swapped from DuckDuckGo to Mojeek
 Phase: 4
 Reason: As of 2026-05-06 the DuckDuckGo HTML endpoint (`https://html.duckduckgo.com/html/`) returns HTTP 202 + the DDG homepage for `site:` queries from any non-browser client (tested both POST and GET, with and without primed cookies). Brave Search returns HTTP 429. Mojeek returns HTTP 200 with usable result URLs that the existing host regex can extract directly. `scripts/harvest.py` now hits `https://www.mojeek.com/search?q=...` instead. The 2-second rate limit is preserved.

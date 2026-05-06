@@ -30,3 +30,9 @@ Reason: Runbook §Opsec's hook used BRE-style alternation (`\|`) with `grep -iE`
 ## INFO-Python-Pin-1 — Project pinned to Python 3.12
 Phase: 1
 Reason: `libsql` v0.1.11 has no prebuilt wheel for Python 3.14 (system default on this machine), and the source build via `maturin` fails. Project pinned to 3.12 via `.python-version`; uv installs 3.12.13 alongside.
+
+## STOP-Workable — Public Workable API requires OAuth
+Phase: 4
+Question: Is there a path to fetch Workable listings without an account-bound OAuth token?
+Default if unanswered: `fetch_workable()` is a stub returning `[]`. `tracked_boards` may still hold workable slugs (harvest can detect them), but the daily ingest skips them. If the user wants Workable coverage, options are: (a) scrape `apply.workable.com/{slug}/` HTML (fragile, ToS-borderline), (b) provide a Workable API key in the env (puts the org behind auth), or (c) drop Workable from the supported set.
+Cost of waiting: a non-trivial slice of mid-stage company boards is on Workable; we miss them until resolved.

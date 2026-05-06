@@ -66,4 +66,4 @@ def test_opsec_or_die_rejects_forbidden() -> None:
 
 def test_opsec_or_die_allows_clean() -> None:
     _opsec_or_die("hello@example.com")
-    _opsec_or_die("personal@example.com")  # substring overlap with forbidden tokens must not trigger
+    _opsec_or_die("personal@example.com")  # substring overlap must not trigger

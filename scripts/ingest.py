@@ -149,11 +149,11 @@ def main() -> int:
         all_listings += [
             RawListing(
                 source_id=f"hn-{story_id}-{c['comment_id']}",
-                title=c.get("title", ""),
-                company=c.get("company", ""),
-                location=c.get("location", ""),
+                title=c.get("title") or "",
+                company=c.get("company") or "",
+                location=c.get("location") or "",
                 url=c.get("url") or "",
-                description=c.get("description_excerpt", ""),
+                description=c.get("description_excerpt") or "",
                 remote=bool(c.get("remote")),
             )
             for c in cached

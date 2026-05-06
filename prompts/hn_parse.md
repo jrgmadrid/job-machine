@@ -13,5 +13,6 @@ Rules:
 - Skip comments that aren't job postings (off-topic, replies, meta).
 - One comment may yield multiple listings if it lists distinct roles — emit one object per role.
 - `description_excerpt`: first 200 chars of the role-specific paragraph, no HTML.
-- `url`: application URL if present, else company URL, else `null`.
+- `url`: application URL if present, else company URL, else `""` (empty string).
+- For any missing string field (`company`, `title`, `location`, `url`, `description_excerpt`), emit `""` — never `null`. Downstream code distinguishes empty-string from missing data by length, not nullability.
 - Return only the JSON array.

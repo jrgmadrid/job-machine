@@ -111,10 +111,10 @@ def fetch_greenhouse(slug: str) -> list[RawListing]:
         listings.append(
             RawListing(
                 source_id=f"gh-{slug}-{j['id']}",
-                title=j["title"],
+                title=j.get("title") or "",
                 company=j.get("company_name") or slug,
                 location=loc_name,
-                url=j["absolute_url"],
+                url=j.get("absolute_url") or "",
                 description=_html_to_text(j.get("content") or ""),
                 remote=_is_remote(loc_name, *metadata_strings),
                 posted_at=j.get("updated_at") or j.get("first_published"),

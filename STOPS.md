@@ -2,11 +2,13 @@
 
 Blockers and informational deviations from spec. Append new entries at the bottom.
 
-## STOP-0 — `.env` partially provisioned
+## STOP-0 — RESOLVED 2026-05-06
 Phase: 0
-Status (2026-05-06): **Turso provisioned.** `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` set; `python -m scripts.db bootstrap` ran successfully against the `aws-us-west-2` `job-machine` DB; all 9 tables present.
-Still missing: `RESEND_API_KEY`, `RESEND_FROM` (verified sender on a real-name-owned domain), `EMAIL_TO`.
-Cost of waiting on Resend: Phase 3 smoke send and the email step of Phase 6/8 stay blocked. Everything else (Phase 4 detect/harvest writes, Phase 8 resume seed, skill smoketests) is unblocked.
+Status:
+- **Turso**: `aws-us-west-2` DB live; `python -m scripts.db bootstrap` applied schema (9 tables + 3 indexes).
+- **Harvest**: 101 boards across 6 ATS types written to `tracked_boards` (Phase 4 acceptance b satisfied).
+- **Resend**: smoke send via `scripts.email_smoketest` accepted by Resend API; 2-listing digest delivered to `EMAIL_TO`.
+- **Sender**: `onboarding@resend.dev` (Resend's pre-verified test sender). Acceptable for testing; production should later verify a real-name-owned domain — opsec gate already in `_opsec_or_die()` will hard-stop on forbidden tokens.
 
 ## INFO-Cowork-1 — Routine prompts live in `docs/routines/`, not `routines/`
 Phase: 6

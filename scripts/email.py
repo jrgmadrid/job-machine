@@ -63,13 +63,10 @@ def render_plain(apps: list[Application]) -> str:
         lines.append(f"## {company}  ({len(listings)} role{plural}, top score {top})")
         for a in listings:
             lines.append(f"  [{a.score}] {a.role}")
-            if a.url:
-                lines.append(f"        {a.url}")
             if a.notes:
                 lines.append(f"        why: {a.notes}")
-            excerpt = _excerpt(a.jd, 160)
-            if excerpt:
-                lines.append(f"        {excerpt}")
+            if a.url:
+                lines.append(f"        {a.url}")
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
@@ -84,7 +81,6 @@ def render_html(apps: list[Application]) -> str:
         rows: list[str] = []
         for a in listings:
             color = _SCORE_COLORS.get(a.score or 0, "#57606a")
-            excerpt = _excerpt(a.jd, 160)
             title_html = (
                 f'<a href="{a.url}" style="color:#0969da;text-decoration:none;">{a.role}</a>'
                 if a.url
@@ -96,13 +92,8 @@ def render_html(apps: list[Application]) -> str:
                 if a.notes
                 else ""
             )
-            excerpt_html = (
-                f'<div style="color:#444;margin-top:6px;font-size:13px;">{excerpt}</div>'
-                if excerpt
-                else ""
-            )
             rows.append(
-                f'<div style="margin:0 0 12px;padding:10px 12px;border-left:3px solid {color};'
+                f'<div style="margin:0 0 10px;padding:8px 12px;border-left:3px solid {color};'
                 f'background:#f6f8fa;font:14px/1.4 -apple-system,Segoe UI,sans-serif;">'
                 f'<div style="font-weight:600;">'
                 f'<span style="display:inline-block;background:{color};color:#fff;'
@@ -110,7 +101,6 @@ def render_html(apps: list[Application]) -> str:
                 f"{title_html}"
                 f"</div>"
                 f"{why_html}"
-                f"{excerpt_html}"
                 f"</div>"
             )
         body = "".join(rows)

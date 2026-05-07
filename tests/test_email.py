@@ -36,8 +36,13 @@ def test_render_plain_includes_score_and_url() -> None:
     assert "## Acme" in out
     assert "[4] Backend Engineer" in out
     assert "https://example.com/jobs/1" in out
-    assert "Distributed systems work" in out
     assert out.startswith("Job digest")
+
+
+def test_render_plain_omits_jd_excerpt() -> None:
+    """JD excerpt was dropped from render — title + why + URL only."""
+    out = render_plain([_app(jd="Distributed systems boilerplate that nobody reads.")])
+    assert "Distributed systems boilerplate" not in out
 
 
 def test_render_html_has_score_badge() -> None:

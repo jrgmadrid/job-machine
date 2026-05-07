@@ -39,53 +39,98 @@ def _excerpt(text: str | None, limit: int = 200) -> str:
 
 
 def _subject(apps: list[Application]) -> str:
-    top = apps[0].score or 0
+    top = max((a.score or 0) for a in apps)
     plural = "es" if len(apps) != 1 else ""
     return f"Job digest — {len(apps)} match{plural} (top score {top})"
 
 
-def render_plain(apps: list[Application]) -> str:
-    lines: list[str] = [_subject(apps), ""]
+def _group_by_company(apps: list[Application]) -> list[tuple[str, list[Application]]]:
+    """Group apps by company. Within a group: score desc. Across groups: top score desc."""
+    by_co: dict[str, list[Application]] = {}
     for a in apps:
-        lines.append(f"[{a.score}] {a.role} at {a.company}")
-        if a.url:
-            lines.append(f"    {a.url}")
-        excerpt = _excerpt(a.jd)
-        if excerpt:
-            lines.append(f"    {excerpt}")
+        by_co.setdefault(a.company, []).append(a)
+    for listings in by_co.values():
+        listings.sort(key=lambda a: -(a.score or 0))
+    return sorted(by_co.items(), key=lambda kv: -(kv[1][0].score or 0))
+
+
+def render_plain(apps: list[Application]) -> str:
+    grouped = _group_by_company(apps)
+    lines: list[str] = [_subject(apps), ""]
+    for company, listings in grouped:
+        top = listings[0].score or 0
+        plural = "s" if len(listings) != 1 else ""
+        lines.append(f"## {company}  ({len(listings)} role{plural}, top score {top})")
+        for a in listings:
+            lines.append(f"  [{a.score}] {a.role}")
+            if a.url:
+                lines.append(f"        {a.url}")
+            if a.notes:
+                lines.append(f"        why: {a.notes}")
+            excerpt = _excerpt(a.jd, 160)
+            if excerpt:
+                lines.append(f"        {excerpt}")
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
 
 def render_html(apps: list[Application]) -> str:
-    rows: list[str] = []
-    for a in apps:
-        color = _SCORE_COLORS.get(a.score or 0, "#57606a")
-        excerpt = _excerpt(a.jd)
-        title_html = (
-            f'<a href="{a.url}" style="color:#0969da;text-decoration:none;">{a.role}</a>'
-            if a.url
-            else a.role
-        )
-        rows.append(
-            f'<div style="margin:0 0 18px;padding:12px 14px;border-left:3px solid {color};'
-            f'background:#f6f8fa;font:14px/1.4 -apple-system,Segoe UI,sans-serif;">'
-            f'<div style="font-weight:600;">'
-            f'<span style="display:inline-block;background:{color};color:#fff;'
-            f'padding:1px 6px;border-radius:3px;margin-right:8px;">{a.score}</span>'
-            f"{title_html}"
-            f'<span style="color:#57606a;font-weight:normal;"> · {a.company}</span>'
+    grouped = _group_by_company(apps)
+    sections: list[str] = []
+    for company, listings in grouped:
+        top = listings[0].score or 0
+        top_color = _SCORE_COLORS.get(top, "#57606a")
+        plural = "s" if len(listings) != 1 else ""
+        rows: list[str] = []
+        for a in listings:
+            color = _SCORE_COLORS.get(a.score or 0, "#57606a")
+            excerpt = _excerpt(a.jd, 160)
+            title_html = (
+                f'<a href="{a.url}" style="color:#0969da;text-decoration:none;">{a.role}</a>'
+                if a.url
+                else a.role
+            )
+            why_html = (
+                f'<div style="color:#57606a;font-style:italic;margin-top:4px;font-size:13px;">'
+                f"why: {a.notes}</div>"
+                if a.notes
+                else ""
+            )
+            excerpt_html = (
+                f'<div style="color:#444;margin-top:6px;font-size:13px;">{excerpt}</div>'
+                if excerpt
+                else ""
+            )
+            rows.append(
+                f'<div style="margin:0 0 12px;padding:10px 12px;border-left:3px solid {color};'
+                f'background:#f6f8fa;font:14px/1.4 -apple-system,Segoe UI,sans-serif;">'
+                f'<div style="font-weight:600;">'
+                f'<span style="display:inline-block;background:{color};color:#fff;'
+                f'padding:1px 6px;border-radius:3px;margin-right:8px;">{a.score}</span>'
+                f"{title_html}"
+                f"</div>"
+                f"{why_html}"
+                f"{excerpt_html}"
+                f"</div>"
+            )
+        body = "".join(rows)
+        sections.append(
+            f'<div style="margin:24px 0 8px;padding:6px 0;border-bottom:1px solid #d0d7de;">'
+            f'<span style="font-weight:600;font-size:16px;">{company}</span>'
+            f'<span style="color:#57606a;margin-left:8px;font-size:13px;">'
+            f"{len(listings)} role{plural} · top score "
+            f'<span style="background:{top_color};color:#fff;padding:0 5px;border-radius:3px;">'
+            f"{top}</span>"
+            f"</span>"
             f"</div>"
-            f'<div style="color:#444;margin-top:6px;">{excerpt}</div>'
-            f"</div>"
+            f"{body}"
         )
-    body = "".join(rows)
     return (
-        f'<div style="max-width:640px;margin:0 auto;padding:16px;'
+        f'<div style="max-width:680px;margin:0 auto;padding:16px;'
         f'font:14px/1.4 -apple-system,Segoe UI,sans-serif;color:#1f2328;">'
-        f'<h2 style="margin:0 0 16px;font:600 18px/1.3 -apple-system,Segoe UI,sans-serif;">'
+        f'<h2 style="margin:0 0 12px;font:600 18px/1.3 -apple-system,Segoe UI,sans-serif;">'
         f"{_subject(apps)}</h2>"
-        f"{body}"
+        f"{''.join(sections)}"
         f"</div>"
     )
 
@@ -99,16 +144,15 @@ def send_digest(
     _opsec_or_die(from_addr)
     if not apps:
         return
-    sorted_apps = sorted(apps, key=lambda a: -(a.score or 0))
     response = httpx.post(
         _RESEND_URL,
         headers={"Authorization": f"Bearer {api_key}"},
         json={
             "from": from_addr,
             "to": [to_addr],
-            "subject": _subject(sorted_apps),
-            "text": render_plain(sorted_apps),
-            "html": render_html(sorted_apps),
+            "subject": _subject(apps),
+            "text": render_plain(apps),
+            "html": render_html(apps),
         },
         timeout=30,
     )

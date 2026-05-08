@@ -122,17 +122,30 @@ def _safe_fetch(
     return listings
 
 
+def _safe_global(fetcher: Any, *args: Any) -> list[RawListing]:
+    """Wrap a global-feed fetcher (Remotive, HN, WWR) so a transient upstream
+    failure doesn't kill the whole ingest. Mirrors `_safe_fetch` semantics
+    but without DB status tracking (these aren't `tracked_boards` rows)."""
+    try:
+        return fetcher(*args)
+    except (httpx.HTTPError, json.JSONDecodeError, KeyError, ValueError) as e:
+        sys.stderr.write(
+            f"warning: {fetcher.__name__}{args!r} failed: {type(e).__name__}: {e}\n"
+        )
+        return []
+
+
 def main() -> int:
     db = Database.from_env()
     profile = _load_profile(db)
 
     all_listings: list[RawListing] = []
 
-    # Global feeds
-    all_listings += fetch_remotive("software-dev")
-    all_listings += fetch_hn_jobs()
-    all_listings += fetch_wwr("programming")
-    all_listings += fetch_wwr("backend")
+    # Global feeds — wrapped so any single upstream 503 doesn't kill the run.
+    all_listings += _safe_global(fetch_remotive, "software-dev")
+    all_listings += _safe_global(fetch_hn_jobs)
+    all_listings += _safe_global(fetch_wwr, "programming")
+    all_listings += _safe_global(fetch_wwr, "backend")
 
     # Tracked boards
     for board in db.list_tracked_boards():
@@ -141,8 +154,15 @@ def main() -> int:
             continue
         all_listings += _safe_fetch(fetcher, board.board_slug, db, board.company)
 
-    # HN hiring (raw — parsing happens via Haiku subagent in the routine)
-    story_id, raw_comments = fetch_hn_hiring_raw()
+    # HN hiring (raw — parsing happens via Haiku subagent in the routine).
+    # Wrapped: a transient 503 from Algolia must not kill the whole pipeline.
+    try:
+        story_id, raw_comments = fetch_hn_hiring_raw()
+    except (httpx.HTTPError, json.JSONDecodeError, KeyError, ValueError) as e:
+        sys.stderr.write(
+            f"warning: fetch_hn_hiring_raw failed: {type(e).__name__}: {e}\n"
+        )
+        story_id, raw_comments = "", []
     cached_listings_json = db.get_hn_cache(story_id) if story_id else None
     if cached_listings_json:
         cached = json.loads(cached_listings_json)
